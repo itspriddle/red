@@ -15,18 +15,8 @@ build = (watch, callback) ->
   coffee.stderr.on 'data', (data) -> print data.toString()
   coffee.on 'exit', (status) -> callback?() if status is 0
 
-run = ->
-  require './lib/client'
-
 task 'build', 'Compile CoffeeScript source files', ->
   build()
 
 task 'watch', 'Recompile CoffeeScript source files when modified', ->
   build true
-
-task 'run', 'Run the bot', ->
-  run()
-
-task 'build_and_run', ->
-  build()
-  run()

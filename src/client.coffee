@@ -1,26 +1,62 @@
-sys      = require 'sys'
-xmpp     = require 'node-xmpp'
-res      = require('./response').Response
-response = new res
+sys       = require 'sys'
+xmpp      = require 'node-xmpp'
+{Request} = require './request'
 
-username = 'you@jabber.org'
-password = 'pw'
+presencePacket =
+  new xmpp.Element('presence', {}).
+  c('show').t('chat').up().c('status').
+  t('Happily echoing your <message/> stanzas')
 
-cl = new xmpp.Client jid: username, password: password
+exports.Client = class Client
+  @connect: (config) ->
+    new @(config)
 
-response.on 'end', (reply) =>
-  stanza = reply.stanza
-  res = reply.response
-  if stanza? and res?
-    cl.send new xmpp.Element('message', {to: stanza.attrs.from, type: 'chat'}).c('body').t(res)
+  constructor: (config) ->
+    @client = new xmpp.Client config
 
-cl.on 'online', ->
-  cl.send(new xmpp.Element 'presence', {}).
-  c('show').t('chat').up().c('status').t('Happily echoing your <message/> stanzas')
+    # Set presence
+    @client.on 'online', ->
+      @send presencePacket
 
-cl.on 'stanza', (stanza) ->
-  if stanza.is('message') && stanza.attrs.type != 'error'
-    response.parse stanza
+    # Echo back errors
+    @client.on 'error', (e) ->
+      console.log e
 
-cl.on 'error', ->
-  sys.puts e
+    @client.on 'stanza', (stanza) ->
+      console.log stanza
+      if stanza.is('message') && stanza.attrs.type != 'error'
+        req = Request.parse stanza
+        console.log req
+
+#     @client.on
+# client.on 'foo'
+#   message = new xmpp.Element('message', to: from, type: chat).c('body').t("Yes, boss?")
+#   @send message
+#
+# client.on 'stanza', (stanza) ->
+#
+#
+#
+#
+# res.on 'end', (reply) =>
+#   stanza = reply.stanza
+#   res = reply.response
+#   if stanza? and res?
+#     cl.send new xmpp.Element('message', {to: stanza.attrs.from, type: 'chat'}).c('body').t(res)
+#
+# cl.on 'online', ->
+#   cl.send(new xmpp.Element 'presence', {}).
+#   c('show').t('chat').up().c('status').t('Happily echoing your <message/> stanzas')
+#
+#
+#
+#
+#   res.on 'end', (reply) =>
+#     stanza = reply.stanza
+#     res = reply.response
+#     if stanza? and res?
+#       cl.send new xmpp.Element('message', {to: stanza.attrs.from, type: 'chat'}).c('body').t(res)
+#
+#   cl.on 'online', ->
+#     cl.send(new xmpp.Element 'presence', {}).
+#     c('show').t('chat').up().c('status').t('Happily echoing your <message/> stanzas')
